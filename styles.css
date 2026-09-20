@@ -1,0 +1,345 @@
+/* ============ Спидометр — минимализм ============ */
+:root{
+  --bg:#060709;
+  --line:#1b2029;
+  --text:#f2f5f8;
+  --dim:#7d8794;
+  --dim2:#59636f;
+  --accent:#35f2c0;
+  --accent2:#39a0ff;
+  --rgb1:53,242,192;
+  --rgb2:57,160,255;
+  --danger:#ff5b5b;
+  --warn:#ffd166;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html,body{ height:100%; }
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+  -webkit-user-select:none; user-select:none;
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased;
+}
+
+.bg-glow{
+  position:fixed; inset:-30%;
+  pointer-events:none;
+  background:
+    radial-gradient(55% 45% at 50% 60%, rgba(var(--rgb1),.16), transparent 70%),
+    radial-gradient(40% 35% at 78% 18%, rgba(var(--rgb2),.10), transparent 70%);
+  opacity:.14;
+  transition:opacity .45s ease;
+}
+
+/* ============ Каркас ============ */
+#app{
+  position:fixed; inset:0;
+  height:100vh; height:100dvh;
+  width:100vw;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 14px)
+    calc(env(safe-area-inset-right, 0px) + 18px)
+    calc(env(safe-area-inset-bottom, 0px) + 14px)
+    calc(env(safe-area-inset-left, 0px) + 18px);
+  display:flex; flex-direction:column; gap:6px;
+
+  transition:
+    transform .34s cubic-bezier(.16,.9,.24,1),
+    opacity .3s ease,
+    filter .34s ease;
+  will-change:transform, opacity, filter;
+}
+
+/* --- хореография поворота --- */
+#app.exiting{
+  transition-duration:.24s;
+  transition-timing-function:cubic-bezier(.6,0,.8,.3);
+  transform:scale(.72) rotate(-7deg);
+  opacity:0;
+  filter:blur(8px) saturate(.6);
+}
+#app.entering{
+  transition:none !important;
+  transform:scale(.78) rotate(7deg);
+  opacity:0;
+  filter:blur(8px);
+}
+
+/* ============ Верхняя панель ============ */
+.topbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:2px 4px;
+}
+.gps{
+  display:flex; align-items:center; gap:8px;
+  color:var(--dim);
+  font-size:.78rem; letter-spacing:.06em; text-transform:uppercase;
+}
+.dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#3a4250; flex:none;
+}
+.dot.off{ background:#3a4250; }
+.dot.locating{ background:var(--warn); animation:pulse 1s ease-in-out infinite; }
+.dot.ok{ background:var(--accent); box-shadow:0 0 10px rgba(53,242,192,.7); }
+.dot.warn{ background:var(--warn); }
+.dot.bad{ background:var(--danger); }
+.dot.demo{ background:var(--accent2); box-shadow:0 0 10px rgba(var(--rgb2),.7); }
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* --- правая часть верхней панели --- */
+.topRight{ display:flex; gap:8px; align-items:center; }
+.unitBtn{
+  padding:8px 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  color:var(--dim);
+  font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+}
+.iconBtn{
+  width:40px; height:40px; padding:0;
+  border-radius:50%;
+  border:1px solid var(--line);
+  color:var(--dim);
+  display:grid; place-items:center;
+}
+.iconBtn svg{
+  display:block;
+  transition:transform .45s cubic-bezier(.16,.9,.24,1);
+}
+#app.landscape .iconBtn svg{ transform:rotate(90deg); }
+.iconBtn.active{
+  color:var(--accent);
+  border-color:rgba(var(--rgb1),.55);
+  box-shadow:0 0 12px rgba(var(--rgb1),.18);
+}
+.themeBtn .sw{
+  width:18px; height:18px; border-radius:50%;
+  display:block;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow:0 0 8px rgba(var(--rgb1),.5);
+}
+
+/* ============ Сцена (скорость + шкала) ============ */
+.stage{
+  flex:1 1 auto; min-height:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.speedBlock{ text-align:center; }
+
+/* цифры-одометр: барабан перекатывается вверх */
+.speed{
+  display:flex; justify-content:center; align-items:center;
+  font-weight:600; line-height:1; letter-spacing:-0.02em;
+  font-size:clamp(4rem, 21vw, 5.4rem);
+  overflow:hidden;
+}
+.odo-digit{ display:block; height:1em; overflow:hidden; }
+.odo-reel{
+  display:block;
+  will-change:transform;
+  transition:transform .3s cubic-bezier(.25,.8,.3,1);
+}
+.odo-reel > span{
+  display:block; width:1ch; height:1em; line-height:1; text-align:center;
+}
+
+.unitLabel{
+  margin-top:6px;
+  font-size:.72rem; font-weight:500;
+  letter-spacing:.34em; text-transform:uppercase;
+  color:var(--dim2);
+}
+
+/* --- вертикальный режим: цифры внутри кольца --- */
+#app.portrait .stage{ position:relative; }
+#app.portrait .speedBlock{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%, -56%);
+  z-index:2; pointer-events:none;
+}
+
+.gaugeWrap{
+  width:min(80vw, 340px);
+  aspect-ratio:1/1;
+  min-height:0;
+}
+#gauge{ display:block; width:100%; height:100%; overflow:visible; }
+
+/* ============ Статистика ============ */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:4px;
+  text-align:center;
+  padding:10px 0 6px;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.stat{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.statLabel{
+  font-size:.6rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--dim2);
+}
+.statVal{ font-size:1.15rem; font-weight:600; }
+
+/* ============ Кнопки ============ */
+.controls{
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  padding-top:6px;
+}
+button{
+  font:inherit; color:inherit; cursor:pointer;
+  border:none; background:none;
+  transition:transform .12s ease, opacity .2s ease, border-color .2s ease, color .2s ease;
+}
+button:active{ transform:scale(.955); }
+button:disabled{ opacity:.28; }
+
+.primaryBtn{
+  flex:1 1 auto; max-width:260px;
+  padding:16px 20px;
+  border-radius:999px;
+  font-size:1.02rem; font-weight:600;
+  color:#032019;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow:0 6px 26px rgba(var(--rgb1),.22);
+}
+.primaryBtn.stop{
+  background:#141a22;
+  color:var(--text);
+  box-shadow:none;
+  border:1px solid var(--line);
+}
+.ghostBtn{
+  padding:13px 13px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  color:var(--dim);
+  font-size:.76rem; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase;
+  white-space:nowrap;
+}
+.ghostBtn.active{
+  color:var(--accent);
+  border-color:rgba(var(--rgb1),.55);
+}
+
+/* ============ Горизонтальный режим ============ */
+#app.landscape{
+  display:grid;
+  grid-template-columns:minmax(0, 1.06fr) minmax(0, 1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:
+    "top    top"
+    "speed  gauge"
+    "stats  ctrl";
+  column-gap:10px;
+  align-items:center;
+}
+#app.landscape .topbar{ grid-area:top; }
+#app.landscape .stage{ display:contents; }
+#app.landscape .speedBlock{
+  grid-area:speed; align-self:center; justify-self:center;
+}
+#app.landscape .speed{
+  font-size:clamp(3.5rem, min(26vh, 20vw), 8rem);
+}
+#app.landscape .gaugeWrap{
+  grid-area:gauge;
+  width:100%; height:100%;
+  aspect-ratio:auto;
+  align-self:center; justify-self:center;
+  padding:6px 0;
+}
+#app.landscape .stats{
+  grid-area:stats;
+  border-top:none;
+  padding:8px 0 0;
+  justify-content:flex-start;
+  text-align:left;
+  gap:6px 22px;
+  align-self:end;
+}
+#app.landscape .statVal{ font-size:1rem; }
+#app.landscape .controls{
+  grid-area:ctrl;
+  justify-self:end; align-self:end;
+  padding-top:0; gap:8px;
+}
+#app.landscape .primaryBtn{ padding:12px 26px; flex:none; }
+#app.landscape .ghostBtn{ padding:12px 12px; font-size:.7rem; }
+
+/* ============ Панель разгона ============ */
+.accelPanel{
+  position:absolute; inset:0; z-index:5;
+  display:flex; align-items:center; justify-content:center;
+  padding:inherit;
+  background:rgba(6,7,9,.72);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease;
+}
+.accelPanel.open{ opacity:1; pointer-events:auto; }
+.accelCard{
+  width:min(84vw, 320px);
+  max-height:100%;
+  overflow-y:auto;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:rgba(12,15,19,.88);
+  padding:18px 18px 14px;
+  transform:translateY(14px) scale(.97);
+  transition:transform .25s cubic-bezier(.16,.9,.24,1);
+}
+.accelPanel.open .accelCard{ transform:none; }
+.accelHead{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size:.72rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--dim);
+  margin-bottom:8px;
+}
+.accelState{
+  color:var(--accent);
+  letter-spacing:.04em; text-transform:none;
+  font-size:.8rem; font-weight:600;
+}
+.accelRow{
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:9px 2px;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.aMark{
+  color:var(--dim);
+  font-size:.95rem; font-weight:500; letter-spacing:.04em;
+}
+.aTime{ font-size:1.15rem; font-weight:600; }
+.aTime.flash{ animation:flash .55s ease; }
+@keyframes flash{
+  0%{ color:var(--accent); text-shadow:0 0 16px rgba(var(--rgb1),.85); }
+  100%{ color:var(--text); text-shadow:none; }
+}
+.accelFoot{
+  margin-top:10px;
+  font-size:.68rem; line-height:1.45; color:var(--dim2);
+}
+@media (orientation: landscape) and (max-height: 400px){
+  .accelCard{ padding:12px 16px 8px; }
+  .accelRow{ padding:6px 2px; }
+}
+
+/* --- очень низкий экран (iPhone SE в альбоме) --- */
+@media (orientation: landscape) and (max-height: 360px){
+  .speed{ font-weight:200; }
+  #app.landscape .unitLabel{ margin-top:2px; }
+  #app.landscape .stats{ grid-template-columns:repeat(4, auto); }
+}

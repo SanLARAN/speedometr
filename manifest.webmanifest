@@ -1,0 +1,19 @@
+{
+  "name": "Спидометр",
+  "short_name": "Спидометр",
+  "description": "Минималистичный GPS-спидометр с вертикальным и горизонтальным режимами",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060709",
+  "theme_color": "#060709",
+  "start_url": ".",
+  "scope": ".",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

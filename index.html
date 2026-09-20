@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#060709">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Спидометр">
+  <title>Спидометр</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="icon" href="icon-512.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <main id="app" class="portrait">
+    <header class="topbar">
+      <div class="gps" role="status" aria-live="polite">
+        <span class="dot off" id="gpsDot"></span>
+        <span id="gpsText">GPS выкл</span>
+      </div>
+      <div class="topRight">
+        <button class="iconBtn themeBtn" id="themeBtn" type="button" aria-label="Сменить цветовую тему" title="Тема подсветки">
+          <span class="sw" id="themeSw"></span>
+        </button>
+        <button class="unitBtn" id="unitBtn" type="button" aria-label="Сменить единицы скорости">км/ч</button>
+        <button class="iconBtn" id="rotateBtn" type="button" aria-label="Переключить вертикальный/горизонтальный режим" title="Вертикальный ⇄ горизонтальный">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33-1.33z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stage">
+      <div class="speedBlock">
+        <div class="speed" id="speed" role="text" aria-label="Текущая скорость"></div>
+        <div class="unitLabel" id="unitLabel">км/ч</div>
+      </div>
+
+      <div class="gaugeWrap">
+        <svg id="gauge" viewBox="0 0 320 215" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <linearGradient id="grad" x1="0" y1="1" x2="1" y2="0.15">
+              <stop id="g1" offset="0" stop-color="#35f2c0"/>
+              <stop id="g2" offset="1" stop-color="#39a0ff"/>
+            </linearGradient>
+            <mask id="pmask" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="340">
+              <path id="maskArc" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/>
+            </mask>
+          </defs>
+          <g id="ticks"></g>
+          <path id="track"    fill="none" stroke="#1d232c" stroke-width="2"/>
+          <path id="glowArc"  fill="none" stroke="url(#grad)" stroke-width="34" opacity="0.16" mask="url(#pmask)"/>
+          <path id="segTrack" fill="none" stroke="#161b23" stroke-width="24"/>
+          <path id="segColor" fill="none" stroke="url(#grad)" stroke-width="24" mask="url(#pmask)"/>
+          <line id="needle" x1="0" y1="0" x2="0" y2="0" stroke="#eef4fa" stroke-width="3" stroke-linecap="round" opacity="0.95"/>
+          <circle id="tipHalo" r="12" fill="url(#grad)" opacity="0.22"/>
+          <circle id="tipDot"  r="4.2" fill="#eaf6ff"/>
+        </svg>
+      </div>
+    </div>
+
+    <section class="stats" aria-label="Статистика поездки">
+      <div class="stat"><span class="statLabel">макс</span><span class="statVal" id="maxVal">0</span></div>
+      <div class="stat"><span class="statLabel">средн</span><span class="statVal" id="avgVal">0</span></div>
+      <div class="stat"><span class="statLabel" id="distLabel">дист, км</span><span class="statVal" id="distVal">0.0</span></div>
+      <div class="stat"><span class="statLabel">время</span><span class="statVal" id="timeVal">0:00</span></div>
+    </section>
+
+    <footer class="controls">
+      <button id="demoBtn" class="ghostBtn" type="button">Демо</button>
+      <button id="startBtn" class="primaryBtn" type="button">Старт</button>
+      <button id="resetBtn" class="ghostBtn" type="button">Сброс</button>
+      <button id="accelBtn" class="ghostBtn" type="button">0–100</button>
+    </footer>
+
+    <section class="accelPanel" id="accelPanel" aria-hidden="true">
+      <div class="accelCard">
+        <div class="accelHead">
+          <span>Разгон, км/ч</span>
+          <span class="accelState" id="accelState">—</span>
+        </div>
+        <div class="accelList" id="accelList"></div>
+        <div class="accelFoot">Замер начнётся автоматически, как только тронетесь с места. Результаты держатся до следующего заезда.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
